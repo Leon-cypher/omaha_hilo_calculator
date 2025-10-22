@@ -210,15 +210,33 @@
             border: 2px solid #ddd;
             background: white;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1.4rem;
             font-weight: 900;
             cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
             flex-shrink: 0;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            padding: 2px;
+        }
+
+        .card-button::before {
+            content: attr(data-suit);
+            font-size: 0.8rem;
+            line-height: 1;
+            margin-bottom: -2px;
+        }
+
+        .card-button::after {
+            content: attr(data-suit);
+            font-size: 0.8rem;
+            line-height: 1;
+            margin-top: -2px;
+            transform: rotate(180deg);
         }
 
         .card-button:hover {
@@ -707,8 +725,13 @@
             .card-button {
                 min-width: 42px;
                 height: 60px;
-                font-size: 0.95rem;
-                font-weight: 800;
+                font-size: 1.2rem;
+                font-weight: 900;
+            }
+
+            .card-button::before,
+            .card-button::after {
+                font-size: 0.7rem;
             }
 
             .mini-card {
@@ -739,8 +762,13 @@
             .card-button {
                 min-width: 38px;
                 height: 54px;
-                font-size: 0.85rem;
-                font-weight: 800;
+                font-size: 1.1rem;
+                font-weight: 900;
+            }
+
+            .card-button::before,
+            .card-button::after {
+                font-size: 0.65rem;
             }
 
             .suit-label {
@@ -973,6 +1001,7 @@
                                             used: isCardUsedByOthers(rank + suit.letter)
                                         }
                                     ]"
+                                    :data-suit="suit.symbol"
                                     @click="toggleCard(rank + suit.letter)"
                                 >
                                     {{ rank }}
