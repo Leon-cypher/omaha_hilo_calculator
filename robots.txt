@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://leon-cypher.github.io/omaha_hilo_calculator/sitemap.xml

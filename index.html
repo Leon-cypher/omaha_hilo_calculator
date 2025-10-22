@@ -3,7 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎯 5張奧瑪哈高低牌勝率計算器 - Vue版（含牌堆）</title>
+    
+    <!-- 基本SEO標籤 -->
+    <title>奧瑪哈高低牌勝率計算器 | Omaha Hi-Lo 撲克勝率分析工具</title>
+    <meta name="description" content="專業的奧瑪哈高低牌(Omaha Hi-Lo)勝率計算器，支援最多9位玩家，蒙特卡羅模擬10000次，提供精確的勝率分析、Scoop率、Split率統計。免費線上工具，手機電腦都能用。">
+    <meta name="keywords" content="奧瑪哈高低牌,Omaha Hi-Lo,撲克勝率計算器,德州撲克,勝率分析,蒙特卡羅模擬,撲克工具,線上計算器,poker calculator">
+    <meta name="author" content="Leon Cypher">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="zh-TW">
+    
+    <!-- Open Graph標籤(Facebook分享) -->
+    <meta property="og:title" content="奧瑪哈高低牌勝率計算器 | 專業撲克分析工具">
+    <meta property="og:description" content="免費的奧瑪哈高低牌勝率計算器，支援多玩家分析，蒙特卡羅10000次模擬，提供精確統計數據">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://leon-cypher.github.io/omaha_hilo_calculator/">
+    <meta property="og:site_name" content="奧瑪哈高低牌勝率計算器">
+    <meta property="og:locale" content="zh_TW">
+    
+    <!-- Twitter Card標籤 -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="奧瑪哈高低牌勝率計算器">
+    <meta name="twitter:description" content="專業的Omaha Hi-Lo撲克勝率分析工具，免費線上使用">
+    
+    <!-- 技術標籤 -->
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="奧瑪哈計算器">
+    
+    <!-- 結構化數據 -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "奧瑪哈高低牌勝率計算器",
+        "description": "專業的奧瑪哈高低牌(Omaha Hi-Lo)勝率計算器，支援最多9位玩家，蒙特卡羅模擬分析",
+        "url": "https://leon-cypher.github.io/omaha_hilo_calculator/",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any",
+        "permissions": "browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "Leon Cypher"
+        }
+    }
+    </script>
+    
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         * {
