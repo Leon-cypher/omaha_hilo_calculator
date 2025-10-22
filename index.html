@@ -136,11 +136,11 @@
         }
 
         .suit-label {
-            min-width: 40px;
+            min-width: 50px;
             text-align: center;
-            font-size: 1.8rem;
-            font-weight: bold;
-            margin-right: 0.5rem;
+            font-size: 2.2rem;
+            font-weight: 900;
+            margin-right: 0.75rem;
         }
 
         .suit-label.red { color: #ff4757; }
@@ -154,25 +154,27 @@
         }
 
         .card-button {
-            min-width: 36px;
-            height: 50px;
-            border-radius: 6px;
+            min-width: 50px;
+            height: 70px;
+            border-radius: 8px;
             border: 2px solid #ddd;
             background: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
-            font-weight: bold;
+            font-size: 1.1rem;
+            font-weight: 900;
             cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
             flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .card-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transform: scale(1.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            border-color: #999;
         }
 
         .card-button.selected {
@@ -424,16 +426,17 @@
         .playing-card.clubs { color: #27ae60; } /* 梅花 - 綠色 */
 
         .mini-card {
-            width: 24px;
-            height: 32px;
-            border-radius: 3px;
+            width: 32px;
+            height: 44px;
+            border-radius: 4px;
             border: 1px solid #ddd;
             background: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
-            font-weight: bold;
+            font-size: 0.85rem;
+            font-weight: 800;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .mini-card.spades { color: #2c3e50; } /* 黑桃 - 黑色 */
@@ -606,14 +609,98 @@
                 padding: 1rem;
             }
             
-            .playing-card {
-                width: 20px;
-                height: 28px;
-                font-size: 0.6rem;
+            .player-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+            
+            .player-label {
+                min-width: auto;
+                text-align: center;
             }
             
             .button-group {
                 flex-direction: column;
+            }
+            
+            .btn {
+                min-width: auto;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card-selector-content {
+                max-width: 95vw;
+                padding: 1rem;
+            }
+
+            .suit-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+
+            .suit-label {
+                text-align: center;
+                margin-right: 0;
+                margin-bottom: 0.5rem;
+                font-size: 2rem;
+            }
+
+            .cards-row {
+                justify-content: center;
+            }
+
+            .card-button {
+                min-width: 42px;
+                height: 60px;
+                font-size: 0.95rem;
+                font-weight: 800;
+            }
+
+            .mini-card {
+                width: 28px;
+                height: 38px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .app-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .card {
+                padding: 1rem;
+                margin: 1rem 0;
+            }
+
+            .card-selector-content {
+                padding: 1rem;
+            }
+
+            .card-button {
+                min-width: 38px;
+                height: 54px;
+                font-size: 0.85rem;
+                font-weight: 800;
+            }
+
+            .suit-label {
+                font-size: 1.8rem;
+            }
+
+            .mini-card {
+                width: 26px;
+                height: 36px;
+                font-size: 0.7rem;
             }
         }
     </style>
