@@ -82,9 +82,9 @@
             background: #111;
             border-radius: 15px;
             padding: 1.5rem;
-            max-width: 400px;
+            max-width: 90vw;
             width: 100%;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
             border: 2px solid rgba(255, 255, 255, 0.2);
         }
@@ -119,106 +119,96 @@
             background: rgba(255, 0, 0, 0.8);
         }
 
-        /* 花色選擇階段 */
-        .suit-selection {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+        /* 橫向花色展示 */
+        .suits-container {
+            display: flex;
+            flex-direction: column;
             gap: 1rem;
-            margin-bottom: 1rem;
         }
 
-        .suit-button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .suit-row {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: bold;
-        }
-
-        .suit-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
-        }
-
-        .suit-button.selected {
-            background: rgba(0, 210, 255, 0.2);
-            border-color: #00d2ff;
-            transform: scale(1.05);
-        }
-
-        .suit-button.red { color: #ff4757; }
-        .suit-button.black { color: #ecf0f1; }
-
-        /* 牌值選擇階段 */
-        .rank-selection {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
             gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 1rem;
+            border-radius: 8px;
         }
 
-        .rank-button {
-            width: 50px;
-            height: 70px;
-            border-radius: 8px;
+        .suit-label {
+            min-width: 40px;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .suit-label.red { color: #ff4757; }
+        .suit-label.black { color: #ecf0f1; }
+
+        .cards-row {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .card-button {
+            min-width: 36px;
+            height: 50px;
+            border-radius: 6px;
             border: 2px solid #ddd;
             background: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 0.8rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
+            flex-shrink: 0;
         }
 
-        .rank-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .rank-button.selected {
-            background: #ffd700;
+        .card-button:hover {
             transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
-        .rank-button.used {
-            background: #ccc;
-            opacity: 0.5;
+        .card-button.selected {
+            background: #00ff00;
+            border-color: #00cc00;
+            transform: scale(1.02);
+        }
+
+        .card-button.used {
+            background: #666;
+            color: #999;
+            border-color: #555;
             cursor: not-allowed;
+            opacity: 0.6;
         }
 
-        .rank-button.red { color: #ff4757; }
-        .rank-button.black { color: #2c3e50; }
-
-        .back-button {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            padding: 0.75rem 1.5rem;
-            cursor: pointer;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
+        .card-button.used:hover {
+            transform: none;
+            box-shadow: none;
         }
 
-        .back-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
+        .card-button.red { color: #ff4757; }
+        .card-button.black { color: #2c3e50; }
 
-        .step-indicator {
+        .selection-info {
             text-align: center;
             margin-bottom: 1rem;
-            opacity: 0.8;
-            font-size: 0.9rem;
+            padding: 0.75rem;
+            background: rgba(0, 210, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 210, 255, 0.3);
+        }
+
+        .selection-count {
+            font-weight: bold;
+            color: #00d2ff;
         }
 
         .card {
@@ -808,44 +798,39 @@
                         <button class="close-btn" @click="closeCardSelector">×</button>
                     </div>
 
-                    <!-- 步驟指示 -->
-                    <div class="step-indicator">
-                        {{ selectedSuit ? '步驟 2/2：選擇牌值' : '步驟 1/2：選擇花色' }}
-                    </div>
-
-                    <!-- 花色選擇階段 -->
-                    <div v-if="!selectedSuit" class="suit-selection">
-                        <div 
-                            v-for="suit in suits" 
-                            :key="suit.symbol" 
-                            class="suit-button"
-                            :class="suit.color"
-                            @click="selectSuit(suit)"
-                        >
-                            {{ suit.symbol }}
+                    <!-- 選擇狀態 -->
+                    <div class="selection-info">
+                        <span class="selection-count">
+                            {{ selectorTarget === 'board' ? 
+                                `已選擇 ${boardCards.length}/5 張公共牌` : 
+                                `已選擇 ${playerHands[selectorTarget]?.length || 0}/5 張手牌` 
+                            }}
+                        </span>
+                        <div style="font-size: 0.8rem; margin-top: 0.25rem; opacity: 0.8;">
+                            點擊撲克牌選擇，再次點擊可取消選擇
                         </div>
                     </div>
 
-                    <!-- 牌值選擇階段 -->
-                    <div v-else>
-                        <button class="back-button" @click="backToSuitSelection">
-                            ← 返回選擇花色
-                        </button>
-                        
-                        <div class="rank-selection">
-                            <div 
-                                v-for="rank in ranks" 
-                                :key="rank"
-                                class="rank-button"
-                                :class="[
-                                    selectedSuit.color,
-                                    { 
-                                        used: isCardUsed(rank + selectedSuit.letter)
-                                    }
-                                ]"
-                                @click="selectRank(rank)"
-                            >
-                                {{ rank }}{{ selectedSuit.symbol }}
+                    <!-- 橫向花色展示 -->
+                    <div class="suits-container">
+                        <div v-for="suit in suits" :key="suit.symbol" class="suit-row">
+                            <div class="suit-label" :class="suit.color">{{ suit.symbol }}</div>
+                            <div class="cards-row">
+                                <div 
+                                    v-for="rank in ranks" 
+                                    :key="rank + suit.symbol"
+                                    class="card-button"
+                                    :class="[
+                                        suit.color,
+                                        { 
+                                            selected: isCardSelected(rank + suit.letter),
+                                            used: isCardUsedByOthers(rank + suit.letter)
+                                        }
+                                    ]"
+                                    @click="toggleCard(rank + suit.letter)"
+                                >
+                                    {{ rank }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -871,7 +856,6 @@
                 // 彈出式選擇器相關
                 const showCardSelector = ref(false)
                 const selectorTarget = ref(null) // 'board' 或玩家索引
-                const selectedSuit = ref(null) // 選中的花色
 
                 const playerColors = [
                     '#3498db', '#e74c3c', '#f39c12', '#9b59b6', 
@@ -904,45 +888,61 @@
                     selectorTarget.value = target
                     showCardSelector.value = true
                     selectedCards.value = []
-                    selectedSuit.value = null
                 }
 
                 function closeCardSelector() {
                     showCardSelector.value = false
                     selectorTarget.value = null
                     selectedCards.value = []
-                    selectedSuit.value = null
                 }
 
-                function selectSuit(suit) {
-                    selectedSuit.value = suit
-                }
-
-                function backToSuitSelection() {
-                    selectedSuit.value = null
-                }
-
-                function selectRank(rank) {
-                    if (!selectedSuit.value) return
-                    
-                    const card = rank + selectedSuit.value.letter
-                    
-                    if (isCardUsed(card)) return
+                function toggleCard(card) {
+                    // 檢查是否被其他玩家或公共牌使用
+                    if (isCardUsedByOthers(card)) return
 
                     if (selectorTarget.value === 'board') {
-                        if (boardCards.value.length < 5 && !boardCards.value.includes(card)) {
+                        const index = boardCards.value.indexOf(card)
+                        if (index > -1) {
+                            // 取消選擇
+                            boardCards.value.splice(index, 1)
+                        } else if (boardCards.value.length < 5) {
+                            // 選擇
                             boardCards.value.push(card)
-                            // 選擇完一張牌後返回花色選擇
-                            selectedSuit.value = null
                         }
                     } else {
                         const playerIndex = selectorTarget.value
-                        if (playerHands.value[playerIndex].length < 5 && !playerHands.value[playerIndex].includes(card)) {
+                        const index = playerHands.value[playerIndex].indexOf(card)
+                        if (index > -1) {
+                            // 取消選擇
+                            playerHands.value[playerIndex].splice(index, 1)
+                        } else if (playerHands.value[playerIndex].length < 5) {
+                            // 選擇
                             playerHands.value[playerIndex].push(card)
-                            // 選擇完一張牌後返回花色選擇
-                            selectedSuit.value = null
                         }
                     }
+                }
+
+                function isCardSelected(card) {
+                    if (selectorTarget.value === 'board') {
+                        return boardCards.value.includes(card)
+                    } else {
+                        return playerHands.value[selectorTarget.value]?.includes(card) || false
+                    }
+                }
+
+                function isCardUsedByOthers(card) {
+                    // 檢查是否被其他玩家或公共牌使用（不包括當前選擇器的目標）
+                    if (selectorTarget.value !== 'board' && boardCards.value.includes(card)) {
+                        return true
+                    }
+                    
+                    for (let i = 0; i < playerHands.value.length; i++) {
+                        if (i !== selectorTarget.value && playerHands.value[i].includes(card)) {
+                            return true
+                        }
+                    }
+                    
+                    return false
                 }
 
                 function isCardUsed(card) {
@@ -972,7 +972,6 @@
                     results.value = null
                     error.value = ''
                     selectedCards.value = []
-                    selectedSuit.value = null
                     closeCardSelector()
                 }
 
@@ -1312,16 +1311,15 @@
                     selectedCards,
                     showCardSelector,
                     selectorTarget,
-                    selectedSuit,
                     currentPlayers,
                     canCalculate,
                     suits,
                     ranks,
                     openCardSelector,
                     closeCardSelector,
-                    selectSuit,
-                    backToSuitSelection,
-                    selectRank,
+                    toggleCard,
+                    isCardSelected,
+                    isCardUsedByOthers,
                     isCardUsed,
                     getCardColor,
                     clearPlayerCards,
