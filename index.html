@@ -82,9 +82,9 @@
             background: #111;
             border-radius: 15px;
             padding: 1.5rem;
-            max-width: 500px;
+            max-width: 400px;
             width: 100%;
-            max-height: 90vh;
+            max-height: 80vh;
             overflow-y: auto;
             border: 2px solid rgba(255, 255, 255, 0.2);
         }
@@ -119,66 +119,107 @@
             background: rgba(255, 0, 0, 0.8);
         }
 
-        .modal-suits-container {
-            display: flex;
-            flex-direction: column;
+        /* 花色選擇階段 */
+        .suit-selection {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
+            margin-bottom: 1rem;
         }
 
-        .modal-suit-row {
+        .suit-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-        }
-
-        .modal-suit-label {
-            width: 40px;
-            text-align: center;
-            font-size: 1.5rem;
+            justify-content: center;
+            font-size: 2rem;
             font-weight: bold;
         }
 
-        .modal-cards-row {
+        .suit-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .suit-button.selected {
+            background: rgba(0, 210, 255, 0.2);
+            border-color: #00d2ff;
+            transform: scale(1.05);
+        }
+
+        .suit-button.red { color: #ff4757; }
+        .suit-button.black { color: #ecf0f1; }
+
+        /* 牌值選擇階段 */
+        .rank-selection {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
             gap: 0.5rem;
         }
 
-        .modal-playing-card {
-            width: 40px;
-            height: 56px;
-            border-radius: 6px;
+        .rank-button {
+            width: 50px;
+            height: 70px;
+            border-radius: 8px;
             border: 2px solid #ddd;
             background: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
+            font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
         }
 
-        .modal-playing-card:hover {
+        .rank-button:hover {
             transform: scale(1.1);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
-        .modal-playing-card.selected {
+        .rank-button.selected {
             background: #ffd700;
             transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
         }
 
-        .modal-playing-card.used {
+        .rank-button.used {
             background: #ccc;
             opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .modal-playing-card.red { color: #ff4757; }
-        .modal-playing-card.black { color: #2c3e50; }
+        .rank-button.red { color: #ff4757; }
+        .rank-button.black { color: #2c3e50; }
+
+        .back-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .step-indicator {
+            text-align: center;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
 
         .card {
             background: rgba(255, 255, 255, 0.08);
@@ -767,25 +808,44 @@
                         <button class="close-btn" @click="closeCardSelector">×</button>
                     </div>
 
-                    <div class="modal-suits-container">
-                        <div v-for="suit in suits" :key="suit.symbol" class="modal-suit-row">
-                            <div class="modal-suit-label" :class="suit.color">{{ suit.symbol }}</div>
-                            <div class="modal-cards-row">
-                                <div 
-                                    v-for="rank in ranks" 
-                                    :key="rank + suit.symbol"
-                                    class="modal-playing-card"
-                                    :class="[
-                                        suit.color,
-                                        { 
-                                            selected: selectedCards.includes(rank + suit.letter),
-                                            used: isCardUsed(rank + suit.letter)
-                                        }
-                                    ]"
-                                    @click="selectCardFromModal(rank + suit.letter)"
-                                >
-                                    {{ rank }}{{ suit.symbol }}
-                                </div>
+                    <!-- 步驟指示 -->
+                    <div class="step-indicator">
+                        {{ selectedSuit ? '步驟 2/2：選擇牌值' : '步驟 1/2：選擇花色' }}
+                    </div>
+
+                    <!-- 花色選擇階段 -->
+                    <div v-if="!selectedSuit" class="suit-selection">
+                        <div 
+                            v-for="suit in suits" 
+                            :key="suit.symbol" 
+                            class="suit-button"
+                            :class="suit.color"
+                            @click="selectSuit(suit)"
+                        >
+                            {{ suit.symbol }}
+                        </div>
+                    </div>
+
+                    <!-- 牌值選擇階段 -->
+                    <div v-else>
+                        <button class="back-button" @click="backToSuitSelection">
+                            ← 返回選擇花色
+                        </button>
+                        
+                        <div class="rank-selection">
+                            <div 
+                                v-for="rank in ranks" 
+                                :key="rank"
+                                class="rank-button"
+                                :class="[
+                                    selectedSuit.color,
+                                    { 
+                                        used: isCardUsed(rank + selectedSuit.letter)
+                                    }
+                                ]"
+                                @click="selectRank(rank)"
+                            >
+                                {{ rank }}{{ selectedSuit.symbol }}
                             </div>
                         </div>
                     </div>
@@ -811,6 +871,7 @@
                 // 彈出式選擇器相關
                 const showCardSelector = ref(false)
                 const selectorTarget = ref(null) // 'board' 或玩家索引
+                const selectedSuit = ref(null) // 選中的花色
 
                 const playerColors = [
                     '#3498db', '#e74c3c', '#f39c12', '#9b59b6', 
@@ -843,25 +904,43 @@
                     selectorTarget.value = target
                     showCardSelector.value = true
                     selectedCards.value = []
+                    selectedSuit.value = null
                 }
 
                 function closeCardSelector() {
                     showCardSelector.value = false
                     selectorTarget.value = null
                     selectedCards.value = []
+                    selectedSuit.value = null
                 }
 
-                function selectCardFromModal(card) {
+                function selectSuit(suit) {
+                    selectedSuit.value = suit
+                }
+
+                function backToSuitSelection() {
+                    selectedSuit.value = null
+                }
+
+                function selectRank(rank) {
+                    if (!selectedSuit.value) return
+                    
+                    const card = rank + selectedSuit.value.letter
+                    
                     if (isCardUsed(card)) return
 
                     if (selectorTarget.value === 'board') {
                         if (boardCards.value.length < 5 && !boardCards.value.includes(card)) {
                             boardCards.value.push(card)
+                            // 選擇完一張牌後返回花色選擇
+                            selectedSuit.value = null
                         }
                     } else {
                         const playerIndex = selectorTarget.value
                         if (playerHands.value[playerIndex].length < 5 && !playerHands.value[playerIndex].includes(card)) {
                             playerHands.value[playerIndex].push(card)
+                            // 選擇完一張牌後返回花色選擇
+                            selectedSuit.value = null
                         }
                     }
                 }
@@ -893,6 +972,7 @@
                     results.value = null
                     error.value = ''
                     selectedCards.value = []
+                    selectedSuit.value = null
                     closeCardSelector()
                 }
 
@@ -1232,13 +1312,16 @@
                     selectedCards,
                     showCardSelector,
                     selectorTarget,
+                    selectedSuit,
                     currentPlayers,
                     canCalculate,
                     suits,
                     ranks,
                     openCardSelector,
                     closeCardSelector,
-                    selectCardFromModal,
+                    selectSuit,
+                    backToSuitSelection,
+                    selectRank,
                     isCardUsed,
                     getCardColor,
                     clearPlayerCards,
