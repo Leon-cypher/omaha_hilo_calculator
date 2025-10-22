@@ -41,12 +41,15 @@
 
         .app-main {
             flex: 1;
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 1rem;
             width: 100%;
-            display: grid;
-            grid-template-columns: 1fr 400px;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
             gap: 1rem;
         }
 
@@ -57,10 +60,125 @@
         }
 
         .right-panel {
+            display: none; /* 隱藏原來的牌堆 */
+        }
+
+        /* 彈出式牌選擇器 */
+        .card-selector-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .card-selector-content {
+            background: #111;
+            border-radius: 15px;
+            padding: 1.5rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .selector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .selector-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            background: rgba(255, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 0, 0, 0.8);
+        }
+
+        .modal-suits-container {
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
+
+        .modal-suit-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-suit-label {
+            width: 40px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .modal-cards-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .modal-playing-card {
+            width: 40px;
+            height: 56px;
+            border-radius: 6px;
+            border: 2px solid #ddd;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .modal-playing-card:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-playing-card.selected {
+            background: #ffd700;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+        }
+
+        .modal-playing-card.used {
+            background: #ccc;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal-playing-card.red { color: #ff4757; }
+        .modal-playing-card.black { color: #2c3e50; }
 
         .card {
             background: rgba(255, 255, 255, 0.08);
@@ -139,10 +257,17 @@
             flex-shrink: 0;
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
         }
 
         .player-label:hover {
             transform: scale(1.05);
+        }
+
+        .player-label::after {
+            content: ' 👆';
+            font-size: 0.7rem;
+            opacity: 0.8;
         }
 
         .player-cards {
@@ -461,7 +586,7 @@
         </header>
 
         <main class="app-main">
-            <div class="left-panel">
+            <div class="content-wrapper">
                 <!-- 玩家手牌設定 -->
                 <section class="card">
                     <h3>🎴 玩家手牌</h3>
@@ -478,12 +603,11 @@
                             v-for="(player, index) in currentPlayers" 
                             :key="index"
                             class="player-row"
-                            :class="{ active: selectedPlayer === index }"
                         >
                             <div 
                                 class="player-label" 
                                 :style="{ backgroundColor: player.color }"
-                                @click="selectPlayer(index)"
+                                @click="openCardSelector(index)"
                             >
                                 玩家{{ index + 1 }}
                             </div>
@@ -510,7 +634,7 @@
                     </div>
 
                     <div class="help-text">
-                        點擊左側玩家標籤選擇玩家，然後點擊右側撲克牌分配手牌
+                        點擊玩家標籤開啟牌選擇器，每個玩家需要選擇5張牌
                     </div>
                 </section>
 
@@ -519,12 +643,11 @@
                     <h3>🃏 公共牌</h3>
                     <div 
                         class="player-row"
-                        :class="{ active: selectedPlayer === 'board' }"
                     >
                         <div 
                             class="player-label" 
                             style="background-color: #27ae60"
-                            @click="selectPlayer('board')"
+                            @click="openCardSelector('board')"
                         >
                             公共牌
                         </div>
@@ -581,24 +704,77 @@
                 <div v-if="error" class="error">
                     {{ error }}
                 </div>
+
+                <!-- 結果顯示 -->
+                <section v-if="results" class="card results-section">
+                    <h3>📊 勝率結果</h3>
+                    <p style="text-align: center; margin-bottom: 1rem; opacity: 0.9;">
+                        模擬次數: <strong>10,000</strong> 次
+                    </p>
+
+                    <div class="results-grid">
+                        <div 
+                            v-for="player in results.players" 
+                            :key="player.player"
+                            class="result-card"
+                            :style="{ borderLeftColor: player.color }"
+                        >
+                            <div class="result-header">
+                                <span class="player-name">{{ player.player }}</span>
+                                <span class="player-hand">{{ player.hand }}</span>
+                            </div>
+                            
+                            <div class="stat-row main-stat">
+                                <span>總勝率 (Equity)</span>
+                                <span class="stat-value primary">{{ player.equity.toFixed(2) }}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>高牌獲勝率</span>
+                                <span class="stat-value">{{ player.hi_win_rate.toFixed(2) }}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>低牌獲勝率</span>
+                                <span class="stat-value">{{ player.lo_win_rate.toFixed(2) }}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Scoop率 (整個底池)</span>
+                                <span class="stat-value">{{ player.scoop_rate.toFixed(2) }}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>獲得3/4底池</span>
+                                <span class="stat-value">{{ player.three_quarter_rate.toFixed(2) }}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Split率 (1/2底池)</span>
+                                <span class="stat-value">{{ player.split_rate.toFixed(2) }}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>獲得1/4底池</span>
+                                <span class="stat-value">{{ player.quarter_rate.toFixed(2) }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
 
-            <div class="right-panel">
-                <!-- 撲克牌堆 -->
-                <section class="card deck-area">
-                    <div class="deck-title">🃏 撲克牌堆</div>
-                    <div class="deck-instructions">
-                        先選擇玩家，再點擊撲克牌分配
+            <!-- 彈出式牌選擇器 -->
+            <div v-if="showCardSelector" class="card-selector-modal" @click="closeCardSelector">
+                <div class="card-selector-content" @click.stop>
+                    <div class="selector-header">
+                        <div class="selector-title">
+                            {{ selectorTarget === 'board' ? '選擇公共牌' : `選擇玩家${selectorTarget + 1}的手牌` }}
+                        </div>
+                        <button class="close-btn" @click="closeCardSelector">×</button>
                     </div>
 
-                    <div class="suits-container">
-                        <div v-for="suit in suits" :key="suit.symbol" class="suit-row">
-                            <div class="suit-label" :class="suit.color">{{ suit.symbol }}</div>
-                            <div class="cards-row">
+                    <div class="modal-suits-container">
+                        <div v-for="suit in suits" :key="suit.symbol" class="modal-suit-row">
+                            <div class="modal-suit-label" :class="suit.color">{{ suit.symbol }}</div>
+                            <div class="modal-cards-row">
                                 <div 
                                     v-for="rank in ranks" 
                                     :key="rank + suit.symbol"
-                                    class="playing-card"
+                                    class="modal-playing-card"
                                     :class="[
                                         suit.color,
                                         { 
@@ -606,66 +782,15 @@
                                             used: isCardUsed(rank + suit.letter)
                                         }
                                     ]"
-                                    @click="selectCard(rank + suit.letter)"
+                                    @click="selectCardFromModal(rank + suit.letter)"
                                 >
                                     {{ rank }}{{ suit.symbol }}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </section>
-            </div>
-
-            <!-- 結果顯示 -->
-            <section v-if="results" class="card results-section">
-                <h3>📊 勝率結果</h3>
-                <p style="text-align: center; margin-bottom: 1rem; opacity: 0.9;">
-                    模擬次數: <strong>10,000</strong> 次
-                </p>
-
-                <div class="results-grid">
-                    <div 
-                        v-for="player in results.players" 
-                        :key="player.player"
-                        class="result-card"
-                        :style="{ borderLeftColor: player.color }"
-                    >
-                        <div class="result-header">
-                            <span class="player-name">{{ player.player }}</span>
-                            <span class="player-hand">{{ player.hand }}</span>
-                        </div>
-                        
-                        <div class="stat-row main-stat">
-                            <span>總勝率 (Equity)</span>
-                            <span class="stat-value primary">{{ player.equity.toFixed(2) }}%</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>高牌獲勝率</span>
-                            <span class="stat-value">{{ player.hi_win_rate.toFixed(2) }}%</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>低牌獲勝率</span>
-                            <span class="stat-value">{{ player.lo_win_rate.toFixed(2) }}%</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>Scoop率 (整個底池)</span>
-                            <span class="stat-value">{{ player.scoop_rate.toFixed(2) }}%</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>獲得3/4底池</span>
-                            <span class="stat-value">{{ player.three_quarter_rate.toFixed(2) }}%</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>Split率 (1/2底池)</span>
-                            <span class="stat-value">{{ player.split_rate.toFixed(2) }}%</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>獲得1/4底池</span>
-                            <span class="stat-value">{{ player.quarter_rate.toFixed(2) }}%</span>
-                        </div>
-                    </div>
                 </div>
-            </section>
+            </div>
         </main>
     </div>
 
@@ -678,12 +803,14 @@
                 const playerCount = ref(2)
                 const playerHands = ref(Array(9).fill().map(() => []))
                 const boardCards = ref([])
-                const simulations = ref(10000)
                 const isCalculating = ref(false)
                 const results = ref(null)
                 const error = ref('')
-                const selectedPlayer = ref(0)
                 const selectedCards = ref([])
+                
+                // 彈出式選擇器相關
+                const showCardSelector = ref(false)
+                const selectorTarget = ref(null) // 'board' 或玩家索引
 
                 const playerColors = [
                     '#3498db', '#e74c3c', '#f39c12', '#9b59b6', 
@@ -712,20 +839,27 @@
                 })
 
                 // 方法
-                function selectPlayer(index) {
-                    selectedPlayer.value = index
+                function openCardSelector(target) {
+                    selectorTarget.value = target
+                    showCardSelector.value = true
                     selectedCards.value = []
                 }
 
-                function selectCard(card) {
+                function closeCardSelector() {
+                    showCardSelector.value = false
+                    selectorTarget.value = null
+                    selectedCards.value = []
+                }
+
+                function selectCardFromModal(card) {
                     if (isCardUsed(card)) return
 
-                    if (selectedPlayer.value === 'board') {
+                    if (selectorTarget.value === 'board') {
                         if (boardCards.value.length < 5 && !boardCards.value.includes(card)) {
                             boardCards.value.push(card)
                         }
                     } else {
-                        const playerIndex = selectedPlayer.value
+                        const playerIndex = selectorTarget.value
                         if (playerHands.value[playerIndex].length < 5 && !playerHands.value[playerIndex].includes(card)) {
                             playerHands.value[playerIndex].push(card)
                         }
@@ -759,6 +893,7 @@
                     results.value = null
                     error.value = ''
                     selectedCards.value = []
+                    closeCardSelector()
                 }
 
                 // 遊戲邏輯（簡化版，與之前相同）
@@ -1094,14 +1229,16 @@
                     isCalculating,
                     results,
                     error,
-                    selectedPlayer,
                     selectedCards,
+                    showCardSelector,
+                    selectorTarget,
                     currentPlayers,
                     canCalculate,
                     suits,
                     ranks,
-                    selectPlayer,
-                    selectCard,
+                    openCardSelector,
+                    closeCardSelector,
+                    selectCardFromModal,
                     isCardUsed,
                     getCardColor,
                     clearPlayerCards,
