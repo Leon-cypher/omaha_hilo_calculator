@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 5張奧瑪哈高低牌勝率計算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Hiragino Sans TC', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .section h3 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            margin: 10px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+        }
+
+        .players-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .player-label {
+            min-width: 60px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .player-input {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,107,107,0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .results {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .result-header {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .error {
+            background: rgba(255,0,0,0.2);
+            border: 1px solid rgba(255,0,0,0.5);
+            color: #ffcdd2;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .help-text {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .card-example {
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 5px 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 0 5px;
+            }
+            
+            .player-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .player-label {
+                min-width: auto;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 5張奧瑪哈高低牌勝率計算器</h1>
+            <p>專業的PLO Hi-Lo勝率分析工具 - 手機版</p>
+        </div>
+
+        <div class="section">
+            <h3>🎴 玩家手牌設定</h3>
+            <div class="input-group">
+                <label>玩家數量</label>
+                <select id="playerCount" onchange="updatePlayerInputs()">
+                    <option value="2">2人</option>
+                    <option value="3">3人</option>
+                    <option value="4">4人</option>
+                    <option value="5">5人</option>
+                    <option value="6">6人</option>
+                    <option value="7">7人</option>
+                    <option value="8">8人</option>
+                    <option value="9">9人</option>
+                </select>
+            </div>
+            
+            <div id="playersContainer" class="players-container">
+                <!-- 動態生成玩家輸入框 -->
+            </div>
+            
+            <div class="help-text">
+                <div class="card-example">牌面格式: As Kh Qd Jc Ts (A♠ K♥ Q♦ J♣ T♠)</div>
+                花色: s(♠) h(♥) d(♦) c(♣) | 牌值: A,2-9,T,J,Q,K
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🃏 公共牌</h3>
+            <div class="input-group">
+                <input type="text" id="boardCards" placeholder="例如: As Kh Qd (可選，0-5張)">
+                <div class="help-text">翻牌前可留空，翻牌後輸入已知公共牌</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>⚙️ 計算設定</h3>
+            <div class="input-group">
+                <label>模擬次數</label>
+                <select id="simulations">
+                    <option value="5000">5,000次 (快速)</option>
+                    <option value="10000" selected>10,000次 (標準)</option>
+                    <option value="20000">20,000次 (精確)</option>
+                    <option value="50000">50,000次 (最精確)</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="fillExample()">
+            📝 填入示例數據
+        </button>
+
+        <button class="btn btn-primary" onclick="calculateEquity()">
+            🎲 計算勝率
+        </button>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>計算中，請稍候...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="results" class="results section">
+            <h3>📊 勝率結果</h3>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化玩家輸入框
+        function updatePlayerInputs() {
+            const count = parseInt(document.getElementById('playerCount').value);
+            const container = document.getElementById('playersContainer');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= count; i++) {
+                const playerRow = document.createElement('div');
+                playerRow.className = 'player-row';
+                playerRow.innerHTML = `
+                    <div class="player-label">玩家${i}</div>
+                    <input type="text" class="player-input" id="player${i}" 
+                           placeholder="例如: As Kh Qd Jc Ts" required>
+                `;
+                container.appendChild(playerRow);
+            }
+        }
+
+        // 初始化
+        updatePlayerInputs();
+
+        // 快速填入示例數據
+        function fillExample() {
+            document.getElementById('player1').value = 'As Ks Qs Js Ts';
+            document.getElementById('player2').value = 'Ah Kh Qh Jh 9h';
+            if (document.getElementById('player3')) {
+                document.getElementById('player3').value = '2c 3c 4c 5c 6c';
+            }
+        }
+
+        // 計算勝率
+        async function calculateEquity() {
+            const playerCount = parseInt(document.getElementById('playerCount').value);
+            const playersHands = [];
+            
+            // 收集玩家手牌
+            for (let i = 1; i <= playerCount; i++) {
+                const hand = document.getElementById(`player${i}`).value.trim();
+                if (!hand) {
+                    showError(`請輸入玩家${i}的手牌`);
+                    return;
+                }
+                playersHands.push(hand);
+            }
+            
+            const boardCards = document.getElementById('boardCards').value.trim();
+            const simulations = parseInt(document.getElementById('simulations').value);
+            
+            // 顯示加載狀態
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        players_hands: playersHands,
+                        board_cards: boardCards,
+                        simulations: simulations
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Unknown error');
+                }
+                
+                displayResults(data);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // 顯示結果
+        function displayResults(data) {
+            const resultsContent = document.getElementById('resultsContent');
+            
+            let html = `<p><strong>模擬次數:</strong> ${data.simulations.toLocaleString()}次</p>`;
+            
+            data.players.forEach((player, index) => {
+                const colors = ['#3498db', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e', '#16a085', '#8e44ad'];
+                const color = colors[index % colors.length];
+                
+                html += `
+                    <div class="result-card" style="border-left-color: ${color}">
+                        <div class="result-header">${player.player}</div>
+                        <div class="help-text" style="margin-bottom: 10px;">${player.hand}</div>
+                        <div class="stat-row">
+                            <span>總勝率 (Equity)</span>
+                            <span><strong>${player.equity}%</strong></span>
+                        </div>
+                        <div class="stat-row">
+                            <span>高牌獲勝率</span>
+                            <span>${player.hi_win_rate}%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>低牌獲勝率</span>
+                            <span>${player.lo_win_rate}%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>獲得整個底池 (Scoop)</span>
+                            <span>${player.scoop_rate}%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>平分底池 (Split)</span>
+                            <span>${player.split_rate}%</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsContent.innerHTML = html;
+            document.getElementById('results').style.display = 'block';
+            
+            // 滾動到結果區域
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 顯示錯誤
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

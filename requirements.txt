@@ -1,0 +1,13 @@
+# 奧瑪哈高低牌勝率計算器依賴套件
+
+# 基本版本（純命令行）
+# 無需額外套件，使用Python標準庫
+
+# 圖形化界面版本
+# tkinter (通常隨Python安裝)
+
+# 視覺化界面版本 (推薦)
+matplotlib>=3.5.0
+
+# 安裝方法：
+# pip install matplotlib

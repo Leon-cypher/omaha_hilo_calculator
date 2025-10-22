@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 5張奧瑪哈高低牌勝率計算器 - Vue版</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Hiragino Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        #app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .app-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .app-header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .app-main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            width: 100%;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-group {
+            margin: 1rem 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .text-input, .select-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .text-input:focus, .select-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.3);
+        }
+
+        .players-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .player-row:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .player-label {
+            min-width: 80px;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .player-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .player-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 2px rgba(103, 126, 234, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            color: #ffcdd2;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            text-align: center;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .results-section {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .simulation-info {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border-left: 5px solid #4ecdc4;
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-header {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .player-name {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .player-hand {
+            display: block;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-row.main-stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border-bottom: none;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .stat-value.primary {
+            font-size: 1.3rem;
+            color: #4ecdc4;
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-top: 1rem;
+            line-height: 1.5;
+        }
+
+        .card-example {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .app-footer {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.2);
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .app-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .app-main {
+                padding: 1rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+            
+            .player-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+            
+            .player-label {
+                min-width: auto;
+                text-align: center;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                min-width: auto;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .app-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .card {
+                padding: 1rem;
+                margin: 1rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header class="app-header">
+            <h1>🎯 5張奧瑪哈高低牌勝率計算器</h1>
+            <p>專業的PLO Hi-Lo勝率分析工具 - Vue版</p>
+        </header>
+
+        <main class="app-main">
+            <!-- 玩家手牌設定 -->
+            <section class="card">
+                <h3>🎴 玩家手牌設定</h3>
+                
+                <div class="input-group">
+                    <label>玩家數量</label>
+                    <select v-model="playerCount" class="select-input">
+                        <option v-for="n in 8" :key="n+1" :value="n+1">{{ n+1 }}人</option>
+                    </select>
+                </div>
+
+                <div class="players-container">
+                    <div 
+                        v-for="(player, index) in currentPlayers" 
+                        :key="index"
+                        class="player-row"
+                    >
+                        <div 
+                            class="player-label" 
+                            :style="{ backgroundColor: player.color }"
+                        >
+                            玩家{{ index + 1 }}
+                        </div>
+                        <input
+                            v-model="playersHands[index]"
+                            type="text"
+                            class="player-input"
+                            :placeholder="`例如: As Kh Qd Jc Ts`"
+                            @keyup.enter="calculateEquity"
+                        />
+                    </div>
+                </div>
+
+                <div class="help-text">
+                    <div class="card-example">牌面格式: As Kh Qd Jc Ts (A♠ K♥ Q♦ J♣ T♠)</div>
+                    花色: s(♠) h(♥) d(♦) c(♣) | 牌值: A,2-9,T,J,Q,K
+                </div>
+            </section>
+
+            <!-- 公共牌設定 -->
+            <section class="card">
+                <h3>🃏 公共牌</h3>
+                <div class="input-group">
+                    <input
+                        v-model="boardCards"
+                        type="text"
+                        class="text-input"
+                        placeholder="例如: As Kh Qd (可選，0-5張)"
+                        @keyup.enter="calculateEquity"
+                    />
+                    <div class="help-text">翻牌前可留空，翻牌後輸入已知公共牌</div>
+                </div>
+            </section>
+
+            <!-- 計算設定 -->
+            <section class="card">
+                <h3>⚙️ 計算設定</h3>
+                <div class="input-group">
+                    <label>模擬次數</label>
+                    <select v-model="simulations" class="select-input">
+                        <option :value="2000">2,000次 (快速)</option>
+                        <option :value="5000">5,000次 (標準)</option>
+                        <option :value="10000">10,000次 (精確)</option>
+                        <option :value="20000">20,000次 (最精確)</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- 操作按鈕 -->
+            <div class="button-group">
+                <button @click="fillExample" class="btn btn-secondary">
+                    📝 填入示例數據
+                </button>
+                <button @click="clearAll" class="btn btn-secondary">
+                    🗑️ 清除全部
+                </button>
+                <button 
+                    @click="calculateEquity" 
+                    :disabled="isCalculating"
+                    class="btn btn-primary"
+                >
+                    <span v-if="isCalculating">
+                        ⏳ 計算中...
+                    </span>
+                    <span v-else>
+                        🎲 計算勝率
+                    </span>
+                </button>
+            </div>
+
+            <!-- 載入動畫 -->
+            <div v-if="isCalculating" class="loading">
+                <div class="spinner"></div>
+                <p>正在進行 {{ simulations.toLocaleString() }} 次蒙特卡羅模擬...</p>
+            </div>
+
+            <!-- 錯誤訊息 -->
+            <div v-if="error" class="error">
+                {{ error }}
+            </div>
+
+            <!-- 結果顯示 -->
+            <section v-if="results" class="card results-section">
+                <h3>📊 勝率結果</h3>
+                <p class="simulation-info">
+                    模擬次數: <strong>{{ results.simulations.toLocaleString() }}</strong> 次
+                </p>
+
+                <div class="results-grid">
+                    <div 
+                        v-for="player in results.players" 
+                        :key="player.player"
+                        class="result-card"
+                        :style="{ borderLeftColor: player.color }"
+                    >
+                        <div class="result-header">
+                            <span class="player-name">{{ player.player }}</span>
+                            <span class="player-hand">{{ player.hand }}</span>
+                        </div>
+                        
+                        <div class="stats-container">
+                            <div class="stat-row main-stat">
+                                <span>總勝率 (Equity)</span>
+                                <span class="stat-value primary">{{ player.equity.toFixed(2) }}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>高牌獲勝率</span>
+                                <span class="stat-value">{{ player.hi_win_rate.toFixed(2) }}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>低牌獲勝率</span>
+                                <span class="stat-value">{{ player.lo_win_rate.toFixed(2) }}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>獲得整個底池 (Scoop)</span>
+                                <span class="stat-value">{{ player.scoop_rate.toFixed(2) }}%</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>平分底池 (Split)</span>
+                                <span class="stat-value">{{ player.split_rate.toFixed(2) }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>使用蒙特卡羅模擬進行精確計算 | Vue.js 版本</p>
+        </footer>
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue
+
+        createApp({
+            setup() {
+                // 響應式數據
+                const playerCount = ref(2)
+                const playersHands = ref(Array(9).fill(''))
+                const boardCards = ref('')
+                const simulations = ref(5000)
+                const isCalculating = ref(false)
+                const results = ref(null)
+                const error = ref('')
+
+                const playerColors = [
+                    '#3498db', '#e74c3c', '#f39c12', '#9b59b6', 
+                    '#1abc9c', '#e67e22', '#34495e', '#16a085', '#8e44ad'
+                ]
+
+                // 計算屬性
+                const currentPlayers = computed(() => {
+                    return Array.from({ length: playerCount.value }, (_, i) => ({
+                        id: i + 1,
+                        color: playerColors[i % playerColors.length]
+                    }))
+                })
+
+                // 撲克牌類別
+                class Card {
+                    constructor(rank, suit) {
+                        this.rank = rank
+                        this.suit = suit
+                        this.value = Card.getRankValue(rank)
+                    }
+
+                    static getRankValue(rank) {
+                        const values = {
+                            '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+                            'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
+                        }
+                        return values[rank] || 0
+                    }
+
+                    toString() {
+                        return this.rank + this.suit
+                    }
+                }
+
+                // 解析牌面字符串
+                function parseCards(cardStr) {
+                    if (!cardStr.trim()) return []
+                    
+                    const cards = []
+                    const parts = cardStr.trim().split(/\s+/)
+                    
+                    for (const part of parts) {
+                        if (part.length !== 2) {
+                            throw new Error(`無效的牌面格式: ${part}`)
+                        }
+                        
+                        const rank = part[0].toUpperCase()
+                        const suit = part[1].toLowerCase()
+                        
+                        if (!'23456789TJQKA'.includes(rank)) {
+                            throw new Error(`無效的牌值: ${rank}`)
+                        }
+                        
+                        if (!'shdc'.includes(suit)) {
+                            throw new Error(`無效的花色: ${suit}`)
+                        }
+                        
+                        // 轉換為顯示用的花色符號
+                        const suitSymbols = { 's': '♠', 'h': '♥', 'd': '♦', 'c': '♣' }
+                        cards.push(new Card(rank, suitSymbols[suit]))
+                    }
+                    
+                    return cards
+                }
+
+                // 簡化的手牌評估器
+                class HandEvaluator {
+                    static evaluateHiHand(cards) {
+                        if (cards.length !== 5) return 0
+                        
+                        const ranks = cards.map(c => c.value).sort((a, b) => b - a)
+                        const suits = cards.map(c => c.suit)
+                        const rankCounts = {}
+                        
+                        ranks.forEach(rank => {
+                            rankCounts[rank] = (rankCounts[rank] || 0) + 1
+                        })
+                        
+                        const counts = Object.values(rankCounts).sort((a, b) => b - a)
+                        const isFlush = new Set(suits).size === 1
+                        const isStraight = this.isStraight(ranks)
+                        
+                        if (isFlush && isStraight) return 8000000 + ranks[0]
+                        if (counts[0] === 4) return 7000000 + ranks[0] * 1000
+                        if (counts[0] === 3 && counts[1] === 2) return 6000000 + ranks[0] * 1000
+                        if (isFlush) return 5000000 + ranks[0]
+                        if (isStraight) return 4000000 + ranks[0]
+                        if (counts[0] === 3) return 3000000 + ranks[0] * 1000
+                        if (counts[0] === 2 && counts[1] === 2) return 2000000 + ranks[0] * 1000
+                        if (counts[0] === 2) return 1000000 + ranks[0] * 1000
+                        
+                        return ranks[0] * 10000 + ranks[1] * 100 + ranks[2]
+                    }
+                    
+                    static isStraight(sortedRanks) {
+                        // 檢查標準順子
+                        let isStandardStraight = true
+                        for (let i = 0; i < 4; i++) {
+                            if (sortedRanks[i] - sortedRanks[i + 1] !== 1) {
+                                isStandardStraight = false
+                                break
+                            }
+                        }
+                        
+                        if (isStandardStraight) return true
+                        
+                        // 檢查 A-2-3-4-5 的情況
+                        if (sortedRanks[0] === 14 && sortedRanks[1] === 5 && sortedRanks[2] === 4 && 
+                            sortedRanks[3] === 3 && sortedRanks[4] === 2) {
+                            return true
+                        }
+                        
+                        return false
+                    }
+                    
+                    static evaluateLoHand(cards) {
+                        if (cards.length !== 5) return null
+                        
+                        const ranks = cards.map(c => c.value === 14 ? 1 : c.value) // A當1
+                        
+                        if (ranks.some(r => r > 8)) return null
+                        if (new Set(ranks).size !== 5) return null // 有對子
+                        
+                        return parseInt(ranks.sort((a, b) => b - a).join(''))
+                    }
+                }
+
+                // 簡化的勝率計算器
+                class EquityCalculator {
+                    static calculateEquity(playersHands, boardCards = [], simulations = 5000) {
+                        const deck = this.createDeck()
+                        const usedCards = new Set()
+                        
+                        // 移除已使用的牌
+                        playersHands.forEach(hand => {
+                            hand.forEach(card => usedCards.add(card.toString()))
+                        })
+                        boardCards.forEach(card => usedCards.add(card.toString()))
+                        
+                        const availableCards = deck.filter(card => !usedCards.has(card.toString()))
+                        
+                        const results = {}
+                        playersHands.forEach((_, i) => {
+                            results[`player_${i}`] = {
+                                equity: 0,
+                                hi_wins: 0,
+                                lo_wins: 0,
+                                scoops: 0,
+                                splits: 0
+                            }
+                        })
+                        
+                        // 蒙特卡羅模擬
+                        for (let sim = 0; sim < simulations; sim++) {
+                            const shuffled = this.shuffle([...availableCards])
+                            const finalBoard = [...boardCards]
+                            
+                            // 補齊公共牌到5張
+                            let cardIndex = 0
+                            while (finalBoard.length < 5) {
+                                finalBoard.push(shuffled[cardIndex++])
+                            }
+                            
+                            // 評估每個玩家的最佳牌型
+                            const playerResults = []
+                            
+                            for (let i = 0; i < playersHands.length; i++) {
+                                const bestHi = this.getBestHiHand(playersHands[i], finalBoard)
+                                const bestLo = this.getBestLoHand(playersHands[i], finalBoard)
+                                
+                                playerResults.push({
+                                    player: i,
+                                    hiStrength: bestHi,
+                                    loStrength: bestLo
+                                })
+                            }
+                            
+                            // 判斷勝負
+                            this.determineWinners(playerResults, results)
+                        }
+                        
+                        // 計算百分比
+                        Object.keys(results).forEach(player => {
+                            const stats = results[player]
+                            stats.hi_win_rate = (stats.hi_wins / simulations) * 100
+                            stats.lo_win_rate = (stats.lo_wins / simulations) * 100
+                            stats.scoop_rate = (stats.scoops / simulations) * 100
+                            stats.split_rate = (stats.splits / simulations) * 100
+                            stats.equity = (stats.hi_wins * 0.5 + stats.lo_wins * 0.5 + stats.scoops) / simulations * 100
+                        })
+                        
+                        return results
+                    }
+                    
+                    static createDeck() {
+                        const suits = ['♠', '♥', '♦', '♣']
+                        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
+                        const deck = []
+                        
+                        for (const suit of suits) {
+                            for (const rank of ranks) {
+                                deck.push(new Card(rank, suit))
+                            }
+                        }
+                        
+                        return deck
+                    }
+                    
+                    static shuffle(array) {
+                        for (let i = array.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [array[i], array[j]] = [array[j], array[i]]
+                        }
+                        return array
+                    }
+                    
+                    static getBestHiHand(holeCards, boardCards) {
+                        let bestStrength = 0
+                        
+                        // 嘗試所有2張手牌 + 3張公共牌的組合
+                        for (let h1 = 0; h1 < holeCards.length; h1++) {
+                            for (let h2 = h1 + 1; h2 < holeCards.length; h2++) {
+                                for (let b1 = 0; b1 < boardCards.length; b1++) {
+                                    for (let b2 = b1 + 1; b2 < boardCards.length; b2++) {
+                                        for (let b3 = b2 + 1; b3 < boardCards.length; b3++) {
+                                            const hand = [
+                                                holeCards[h1], holeCards[h2],
+                                                boardCards[b1], boardCards[b2], boardCards[b3]
+                                            ]
+                                            
+                                            const strength = HandEvaluator.evaluateHiHand(hand)
+                                            if (strength > bestStrength) {
+                                                bestStrength = strength
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        return bestStrength
+                    }
+                    
+                    static getBestLoHand(holeCards, boardCards) {
+                        let bestStrength = null
+                        
+                        // 嘗試所有2張手牌 + 3張公共牌的組合
+                        for (let h1 = 0; h1 < holeCards.length; h1++) {
+                            for (let h2 = h1 + 1; h2 < holeCards.length; h2++) {
+                                for (let b1 = 0; b1 < boardCards.length; b1++) {
+                                    for (let b2 = b1 + 1; b2 < boardCards.length; b2++) {
+                                        for (let b3 = b2 + 1; b3 < boardCards.length; b3++) {
+                                            const hand = [
+                                                holeCards[h1], holeCards[h2],
+                                                boardCards[b1], boardCards[b2], boardCards[b3]
+                                            ]
+                                            
+                                            const strength = HandEvaluator.evaluateLoHand(hand)
+                                            if (strength !== null) {
+                                                if (bestStrength === null || strength < bestStrength) {
+                                                    bestStrength = strength
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        return bestStrength
+                    }
+                    
+                    static determineWinners(playerResults, results) {
+                        // 找出高牌獲勝者
+                        const maxHi = Math.max(...playerResults.map(p => p.hiStrength))
+                        const hiWinners = playerResults.filter(p => p.hiStrength === maxHi).map(p => p.player)
+                        
+                        // 找出低牌獲勝者
+                        const validLow = playerResults.filter(p => p.loStrength !== null)
+                        let loWinners = []
+                        
+                        if (validLow.length > 0) {
+                            const minLo = Math.min(...validLow.map(p => p.loStrength))
+                            loWinners = validLow.filter(p => p.loStrength === minLo).map(p => p.player)
+                        }
+                        
+                        // 分配勝利
+                        hiWinners.forEach(player => {
+                            results[`player_${player}`].hi_wins++
+                            if (loWinners.includes(player)) {
+                                results[`player_${player}`].scoops++
+                            } else if (loWinners.length > 0) {
+                                results[`player_${player}`].splits++
+                            }
+                        })
+                        
+                        loWinners.forEach(player => {
+                            results[`player_${player}`].lo_wins++
+                            if (!hiWinners.includes(player)) {
+                                results[`player_${player}`].splits++
+                            }
+                        })
+                    }
+                }
+
+                // 方法
+                function fillExample() {
+                    playersHands.value[0] = 'As Ks Qs Js Ts'
+                    playersHands.value[1] = 'Ah Kh Qh Jh 9h'
+                    if (playerCount.value >= 3) {
+                        playersHands.value[2] = '2c 3c 4c 5c 6c'
+                    }
+                    boardCards.value = ''
+                }
+
+                function clearAll() {
+                    playersHands.value = Array(9).fill('')
+                    boardCards.value = ''
+                    results.value = null
+                    error.value = ''
+                }
+
+                async function calculateEquity() {
+                    error.value = ''
+                    results.value = null
+                    
+                    // 驗證輸入
+                    const hands = []
+                    for (let i = 0; i < playerCount.value; i++) {
+                        const hand = playersHands.value[i]?.trim()
+                        if (!hand) {
+                            error.value = `請輸入玩家${i + 1}的手牌`
+                            return
+                        }
+                        
+                        try {
+                            const parsedHand = parseCards(hand)
+                            if (parsedHand.length !== 5) {
+                                error.value = `玩家${i + 1}的手牌必須是5張`
+                                return
+                            }
+                            hands.push(parsedHand)
+                        } catch (err) {
+                            error.value = `玩家${i + 1}的手牌格式錯誤: ${err.message}`
+                            return
+                        }
+                    }
+                    
+                    let board = []
+                    if (boardCards.value.trim()) {
+                        try {
+                            board = parseCards(boardCards.value.trim())
+                            if (board.length > 5) {
+                                error.value = '公共牌不能超過5張'
+                                return
+                            }
+                        } catch (err) {
+                            error.value = `公共牌格式錯誤: ${err.message}`
+                            return
+                        }
+                    }
+                    
+                    isCalculating.value = true
+                    
+                    // 使用 setTimeout 讓 UI 有時間更新
+                    setTimeout(() => {
+                        try {
+                            const calculationResults = EquityCalculator.calculateEquity(hands, board, simulations.value)
+                            
+                            // 格式化結果
+                            results.value = {
+                                simulations: simulations.value,
+                                players: Object.keys(calculationResults).map((playerKey, index) => ({
+                                    player: `玩家${index + 1}`,
+                                    hand: hands[index].map(c => c.toString()).join(' '),
+                                    color: playerColors[index % playerColors.length],
+                                    ...calculationResults[playerKey]
+                                }))
+                            }
+                        } catch (err) {
+                            error.value = `計算錯誤: ${err.message}`
+                        } finally {
+                            isCalculating.value = false
+                        }
+                    }, 100)
+                }
+
+                return {
+                    playerCount,
+                    playersHands,
+                    boardCards,
+                    simulations,
+                    isCalculating,
+                    results,
+                    error,
+                    currentPlayers,
+                    fillExample,
+                    clearAll,
+                    calculateEquity
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

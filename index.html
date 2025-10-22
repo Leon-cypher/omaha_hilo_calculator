@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 5張奧瑪哈高低牌勝率計算器 - Vue版（含牌堆）</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Hiragino Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000000;
+            color: white;
+            min-height: 100vh;
+        }
+
+        #app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .app-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .app-main {
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1rem;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 1.5rem;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-group {
+            margin: 0.75rem 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .text-input, .select-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .text-input:focus, .select-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 2px rgba(103, 126, 234, 0.3);
+        }
+
+        .players-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.75rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .player-row.active {
+            background: rgba(255, 215, 0, 0.15);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+
+        .player-label {
+            min-width: 70px;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-align: center;
+            color: white;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .player-label:hover {
+            transform: scale(1.05);
+        }
+
+        .player-cards {
+            flex: 1;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .selected-cards {
+            display: flex;
+            gap: 0.25rem;
+            flex: 1;
+        }
+
+        .clear-btn {
+            background: rgba(255, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 0, 0, 0.8);
+        }
+
+        /* 撲克牌堆區域 */
+        .deck-area {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 1rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .deck-title {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .deck-instructions {
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 1rem;
+        }
+
+        .suits-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .suit-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .suit-label {
+            width: 30px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .suit-label.red { color: #ff4757; }
+        .suit-label.black { color: #ecf0f1; }
+
+        .cards-row {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        /* 撲克牌樣式 */
+        .playing-card {
+            width: 32px;
+            height: 44px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .playing-card:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .playing-card.selected {
+            background: #ffd700;
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
+        }
+
+        .playing-card.used {
+            background: #ccc;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .playing-card.red { color: #ff4757; }
+        .playing-card.black { color: #2c3e50; }
+
+        .mini-card {
+            width: 24px;
+            height: 32px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .mini-card.red { color: #ff4757; }
+        .mini-card.black { color: #2c3e50; }
+
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff4757, #ff6348);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            color: #ffcdd2;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .results-section {
+            grid-column: 1 / -1;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            border-left: 4px solid #00d2ff;
+        }
+
+        .result-header {
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+
+        .player-name {
+            display: block;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .player-hand {
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-row.main-stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+            border-bottom: none;
+        }
+
+        .stat-value.primary {
+            font-size: 1.1rem;
+            color: #00d2ff;
+        }
+
+        .help-text {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 1024px) {
+            .app-main {
+                grid-template-columns: 1fr;
+                max-width: 800px;
+            }
+            
+            .deck-area {
+                max-height: 400px;
+            }
+            
+            .cards-row {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .playing-card {
+                width: 20px;
+                height: 28px;
+                font-size: 0.6rem;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header class="app-header">
+            <h1>🎯 5張奧瑪哈高低牌勝率計算器</h1>
+            <p>點擊撲克牌選擇 | 蒙特卡羅模擬 | Vue版</p>
+        </header>
+
+        <main class="app-main">
+            <div class="left-panel">
+                <!-- 玩家手牌設定 -->
+                <section class="card">
+                    <h3>🎴 玩家手牌</h3>
+                    
+                    <div class="input-group">
+                        <label>玩家數量</label>
+                        <select v-model="playerCount" class="select-input">
+                            <option v-for="n in 8" :key="n+1" :value="n+1">{{ n+1 }}人</option>
+                        </select>
+                    </div>
+
+                    <div class="players-container">
+                        <div 
+                            v-for="(player, index) in currentPlayers" 
+                            :key="index"
+                            class="player-row"
+                            :class="{ active: selectedPlayer === index }"
+                        >
+                            <div 
+                                class="player-label" 
+                                :style="{ backgroundColor: player.color }"
+                                @click="selectPlayer(index)"
+                            >
+                                玩家{{ index + 1 }}
+                            </div>
+                            <div class="player-cards">
+                                <div class="selected-cards">
+                                    <div 
+                                        v-for="card in playerHands[index]" 
+                                        :key="card"
+                                        class="mini-card"
+                                        :class="getCardColor(card)"
+                                    >
+                                        {{ card }}
+                                    </div>
+                                </div>
+                                <button 
+                                    v-if="playerHands[index].length > 0"
+                                    @click="clearPlayerCards(index)"
+                                    class="clear-btn"
+                                >
+                                    清除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="help-text">
+                        點擊左側玩家標籤選擇玩家，然後點擊右側撲克牌分配手牌
+                    </div>
+                </section>
+
+                <!-- 公共牌設定 -->
+                <section class="card">
+                    <h3>🃏 公共牌</h3>
+                    <div 
+                        class="player-row"
+                        :class="{ active: selectedPlayer === 'board' }"
+                    >
+                        <div 
+                            class="player-label" 
+                            style="background-color: #27ae60"
+                            @click="selectPlayer('board')"
+                        >
+                            公共牌
+                        </div>
+                        <div class="player-cards">
+                            <div class="selected-cards">
+                                <div 
+                                    v-for="card in boardCards" 
+                                    :key="card"
+                                    class="mini-card"
+                                    :class="getCardColor(card)"
+                                >
+                                    {{ card }}
+                                </div>
+                            </div>
+                            <button 
+                                v-if="boardCards.length > 0"
+                                @click="clearBoardCards()"
+                                class="clear-btn"
+                            >
+                                清除
+                            </button>
+                        </div>
+                    </div>
+                    <div class="help-text">
+                        翻牌前可留空，翻牌後選擇已知公共牌（最多5張）
+                    </div>
+                </section>
+
+                <!-- 計算設定和按鈕 -->
+                <section class="card">
+                    <h3>🎲 開始計算</h3>
+
+                    <div class="button-group">
+                        <button @click="clearAll" class="btn btn-secondary">
+                            🗑️ 清除全部
+                        </button>
+                        <button 
+                            @click="calculateEquity" 
+                            :disabled="isCalculating || !canCalculate"
+                            class="btn btn-primary"
+                        >
+                            <span v-if="isCalculating">⏳ 計算中...</span>
+                            <span v-else>🎲 計算勝率 (10,000次)</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 載入和錯誤 -->
+                <div v-if="isCalculating" class="loading">
+                    <div class="spinner"></div>
+                    <p>正在進行 10,000 次蒙特卡羅模擬...</p>
+                </div>
+
+                <div v-if="error" class="error">
+                    {{ error }}
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <!-- 撲克牌堆 -->
+                <section class="card deck-area">
+                    <div class="deck-title">🃏 撲克牌堆</div>
+                    <div class="deck-instructions">
+                        先選擇玩家，再點擊撲克牌分配
+                    </div>
+
+                    <div class="suits-container">
+                        <div v-for="suit in suits" :key="suit.symbol" class="suit-row">
+                            <div class="suit-label" :class="suit.color">{{ suit.symbol }}</div>
+                            <div class="cards-row">
+                                <div 
+                                    v-for="rank in ranks" 
+                                    :key="rank + suit.symbol"
+                                    class="playing-card"
+                                    :class="[
+                                        suit.color,
+                                        { 
+                                            selected: selectedCards.includes(rank + suit.letter),
+                                            used: isCardUsed(rank + suit.letter)
+                                        }
+                                    ]"
+                                    @click="selectCard(rank + suit.letter)"
+                                >
+                                    {{ rank }}{{ suit.symbol }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- 結果顯示 -->
+            <section v-if="results" class="card results-section">
+                <h3>📊 勝率結果</h3>
+                <p style="text-align: center; margin-bottom: 1rem; opacity: 0.9;">
+                    模擬次數: <strong>10,000</strong> 次
+                </p>
+
+                <div class="results-grid">
+                    <div 
+                        v-for="player in results.players" 
+                        :key="player.player"
+                        class="result-card"
+                        :style="{ borderLeftColor: player.color }"
+                    >
+                        <div class="result-header">
+                            <span class="player-name">{{ player.player }}</span>
+                            <span class="player-hand">{{ player.hand }}</span>
+                        </div>
+                        
+                        <div class="stat-row main-stat">
+                            <span>總勝率 (Equity)</span>
+                            <span class="stat-value primary">{{ player.equity.toFixed(2) }}%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>高牌獲勝率</span>
+                            <span class="stat-value">{{ player.hi_win_rate.toFixed(2) }}%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>低牌獲勝率</span>
+                            <span class="stat-value">{{ player.lo_win_rate.toFixed(2) }}%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Scoop率 (整個底池)</span>
+                            <span class="stat-value">{{ player.scoop_rate.toFixed(2) }}%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>獲得3/4底池</span>
+                            <span class="stat-value">{{ player.three_quarter_rate.toFixed(2) }}%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Split率 (1/2底池)</span>
+                            <span class="stat-value">{{ player.split_rate.toFixed(2) }}%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>獲得1/4底池</span>
+                            <span class="stat-value">{{ player.quarter_rate.toFixed(2) }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue
+
+        createApp({
+            setup() {
+                // 響應式數據
+                const playerCount = ref(2)
+                const playerHands = ref(Array(9).fill().map(() => []))
+                const boardCards = ref([])
+                const simulations = ref(10000)
+                const isCalculating = ref(false)
+                const results = ref(null)
+                const error = ref('')
+                const selectedPlayer = ref(0)
+                const selectedCards = ref([])
+
+                const playerColors = [
+                    '#3498db', '#e74c3c', '#f39c12', '#9b59b6', 
+                    '#1abc9c', '#e67e22', '#34495e', '#16a085', '#8e44ad'
+                ]
+
+                const suits = [
+                    { symbol: '♠', letter: 's', color: 'black' },
+                    { symbol: '♥', letter: 'h', color: 'red' },
+                    { symbol: '♦', letter: 'd', color: 'red' },
+                    { symbol: '♣', letter: 'c', color: 'black' }
+                ]
+
+                const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
+
+                // 計算屬性
+                const currentPlayers = computed(() => {
+                    return Array.from({ length: playerCount.value }, (_, i) => ({
+                        id: i + 1,
+                        color: playerColors[i % playerColors.length]
+                    }))
+                })
+
+                const canCalculate = computed(() => {
+                    return playerHands.value.slice(0, playerCount.value).every(hand => hand.length === 5)
+                })
+
+                // 方法
+                function selectPlayer(index) {
+                    selectedPlayer.value = index
+                    selectedCards.value = []
+                }
+
+                function selectCard(card) {
+                    if (isCardUsed(card)) return
+
+                    if (selectedPlayer.value === 'board') {
+                        if (boardCards.value.length < 5 && !boardCards.value.includes(card)) {
+                            boardCards.value.push(card)
+                        }
+                    } else {
+                        const playerIndex = selectedPlayer.value
+                        if (playerHands.value[playerIndex].length < 5 && !playerHands.value[playerIndex].includes(card)) {
+                            playerHands.value[playerIndex].push(card)
+                        }
+                    }
+                }
+
+                function isCardUsed(card) {
+                    // 檢查是否已被任何玩家或公共牌使用
+                    for (let hand of playerHands.value) {
+                        if (hand.includes(card)) return true
+                    }
+                    return boardCards.value.includes(card)
+                }
+
+                function getCardColor(card) {
+                    const suit = card.slice(-1)
+                    return (suit === 'h' || suit === 'd') ? 'red' : 'black'
+                }
+
+                function clearPlayerCards(index) {
+                    playerHands.value[index] = []
+                }
+
+                function clearBoardCards() {
+                    boardCards.value = []
+                }
+
+                function clearAll() {
+                    playerHands.value = Array(9).fill().map(() => [])
+                    boardCards.value = []
+                    results.value = null
+                    error.value = ''
+                    selectedCards.value = []
+                }
+
+                // 遊戲邏輯（簡化版，與之前相同）
+                class Card {
+                    constructor(rank, suit) {
+                        this.rank = rank
+                        this.suit = suit
+                        this.value = Card.getRankValue(rank)
+                    }
+
+                    static getRankValue(rank) {
+                        const values = {
+                            '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+                            'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
+                        }
+                        return values[rank] || 0
+                    }
+
+                    toString() {
+                        return this.rank + this.suit
+                    }
+                }
+
+                function parseCards(cardArray) {
+                    return cardArray.map(cardStr => {
+                        const rank = cardStr[0]
+                        const suitLetter = cardStr[1]
+                        const suitSymbols = { 's': '♠', 'h': '♥', 'd': '♦', 'c': '♣' }
+                        return new Card(rank, suitSymbols[suitLetter])
+                    })
+                }
+
+                // 這裡包含之前的計算邏輯...
+                class HandEvaluator {
+                    static evaluateHiHand(cards) {
+                        if (cards.length !== 5) return 0
+                        
+                        const ranks = cards.map(c => c.value).sort((a, b) => b - a)
+                        const suits = cards.map(c => c.suit)
+                        const rankCounts = {}
+                        
+                        ranks.forEach(rank => {
+                            rankCounts[rank] = (rankCounts[rank] || 0) + 1
+                        })
+                        
+                        const counts = Object.values(rankCounts).sort((a, b) => b - a)
+                        const isFlush = new Set(suits).size === 1
+                        const isStraight = this.isStraight(ranks)
+                        
+                        if (isFlush && isStraight) return 8000000 + ranks[0]
+                        if (counts[0] === 4) return 7000000 + ranks[0] * 1000
+                        if (counts[0] === 3 && counts[1] === 2) return 6000000 + ranks[0] * 1000
+                        if (isFlush) return 5000000 + ranks[0]
+                        if (isStraight) return 4000000 + ranks[0]
+                        if (counts[0] === 3) return 3000000 + ranks[0] * 1000
+                        if (counts[0] === 2 && counts[1] === 2) return 2000000 + ranks[0] * 1000
+                        if (counts[0] === 2) return 1000000 + ranks[0] * 1000
+                        
+                        return ranks[0] * 10000 + ranks[1] * 100 + ranks[2]
+                    }
+                    
+                    static isStraight(sortedRanks) {
+                        let isStandardStraight = true
+                        for (let i = 0; i < 4; i++) {
+                            if (sortedRanks[i] - sortedRanks[i + 1] !== 1) {
+                                isStandardStraight = false
+                                break
+                            }
+                        }
+                        
+                        if (isStandardStraight) return true
+                        
+                        if (sortedRanks[0] === 14 && sortedRanks[1] === 5 && sortedRanks[2] === 4 && 
+                            sortedRanks[3] === 3 && sortedRanks[4] === 2) {
+                            return true
+                        }
+                        
+                        return false
+                    }
+                    
+                    static evaluateLoHand(cards) {
+                        if (cards.length !== 5) return null
+                        
+                        const ranks = cards.map(c => c.value === 14 ? 1 : c.value)
+                        
+                        if (ranks.some(r => r > 8)) return null
+                        if (new Set(ranks).size !== 5) return null
+                        
+                        return parseInt(ranks.sort((a, b) => b - a).join(''))
+                    }
+                }
+
+                class EquityCalculator {
+                    static calculateEquity(playersHands, boardCards = [], simulations = 5000) {
+                        const deck = this.createDeck()
+                        const usedCards = new Set()
+                        
+                        playersHands.forEach(hand => {
+                            hand.forEach(card => usedCards.add(card.toString()))
+                        })
+                        boardCards.forEach(card => usedCards.add(card.toString()))
+                        
+                        const availableCards = deck.filter(card => !usedCards.has(card.toString()))
+                        
+                        const results = {}
+                        playersHands.forEach((_, i) => {
+                            results[`player_${i}`] = {
+                                equity: 0,
+                                hi_wins: 0,
+                                lo_wins: 0,
+                                scoops: 0,        // 獲得整個底池
+                                splits: 0,       // 平分底池 (1/2)
+                                quarters: 0,     // 獲得1/4底池
+                                three_quarters: 0 // 獲得3/4底池
+                            }
+                        })
+                        
+                        for (let sim = 0; sim < simulations; sim++) {
+                            const shuffled = this.shuffle([...availableCards])
+                            const finalBoard = [...boardCards]
+                            
+                            let cardIndex = 0
+                            while (finalBoard.length < 5) {
+                                finalBoard.push(shuffled[cardIndex++])
+                            }
+                            
+                            const playerResults = []
+                            
+                            for (let i = 0; i < playersHands.length; i++) {
+                                const bestHi = this.getBestHiHand(playersHands[i], finalBoard)
+                                const bestLo = this.getBestLoHand(playersHands[i], finalBoard)
+                                
+                                playerResults.push({
+                                    player: i,
+                                    hiStrength: bestHi,
+                                    loStrength: bestLo
+                                })
+                            }
+                            
+                            this.determineWinners(playerResults, results)
+                        }
+                        
+                        Object.keys(results).forEach(player => {
+                            const stats = results[player]
+                            stats.hi_win_rate = (stats.hi_wins / simulations) * 100
+                            stats.lo_win_rate = (stats.lo_wins / simulations) * 100
+                            stats.scoop_rate = (stats.scoops / simulations) * 100
+                            stats.split_rate = (stats.splits / simulations) * 100
+                            stats.quarter_rate = (stats.quarters / simulations) * 100
+                            stats.three_quarter_rate = (stats.three_quarters / simulations) * 100
+                            // 修正總勝率計算：加權計算獲得底池的期望值
+                            stats.equity = ((stats.scoops * 1.0 + stats.three_quarters * 0.75 + stats.splits * 0.5 + stats.quarters * 0.25) / simulations) * 100
+                        })
+                        
+                        return results
+                    }
+                    
+                    static createDeck() {
+                        const suits = ['♠', '♥', '♦', '♣']
+                        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
+                        const deck = []
+                        
+                        for (const suit of suits) {
+                            for (const rank of ranks) {
+                                deck.push(new Card(rank, suit))
+                            }
+                        }
+                        
+                        return deck
+                    }
+                    
+                    static shuffle(array) {
+                        for (let i = array.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [array[i], array[j]] = [array[j], array[i]]
+                        }
+                        return array
+                    }
+                    
+                    static getBestHiHand(holeCards, boardCards) {
+                        let bestStrength = 0
+                        
+                        for (let h1 = 0; h1 < holeCards.length; h1++) {
+                            for (let h2 = h1 + 1; h2 < holeCards.length; h2++) {
+                                for (let b1 = 0; b1 < boardCards.length; b1++) {
+                                    for (let b2 = b1 + 1; b2 < boardCards.length; b2++) {
+                                        for (let b3 = b2 + 1; b3 < boardCards.length; b3++) {
+                                            const hand = [
+                                                holeCards[h1], holeCards[h2],
+                                                boardCards[b1], boardCards[b2], boardCards[b3]
+                                            ]
+                                            
+                                            const strength = HandEvaluator.evaluateHiHand(hand)
+                                            if (strength > bestStrength) {
+                                                bestStrength = strength
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        return bestStrength
+                    }
+                    
+                    static getBestLoHand(holeCards, boardCards) {
+                        let bestStrength = null
+                        
+                        for (let h1 = 0; h1 < holeCards.length; h1++) {
+                            for (let h2 = h1 + 1; h2 < holeCards.length; h2++) {
+                                for (let b1 = 0; b1 < boardCards.length; b1++) {
+                                    for (let b2 = b1 + 1; b2 < boardCards.length; b2++) {
+                                        for (let b3 = b2 + 1; b3 < boardCards.length; b3++) {
+                                            const hand = [
+                                                holeCards[h1], holeCards[h2],
+                                                boardCards[b1], boardCards[b2], boardCards[b3]
+                                            ]
+                                            
+                                            const strength = HandEvaluator.evaluateLoHand(hand)
+                                            if (strength !== null) {
+                                                if (bestStrength === null || strength < bestStrength) {
+                                                    bestStrength = strength
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        return bestStrength
+                    }
+                    
+                    static determineWinners(playerResults, results) {
+                        const maxHi = Math.max(...playerResults.map(p => p.hiStrength))
+                        const hiWinners = playerResults.filter(p => p.hiStrength === maxHi).map(p => p.player)
+                        
+                        const validLow = playerResults.filter(p => p.loStrength !== null)
+                        let loWinners = []
+                        
+                        if (validLow.length > 0) {
+                            const minLo = Math.min(...validLow.map(p => p.loStrength))
+                            loWinners = validLow.filter(p => p.loStrength === minLo).map(p => p.player)
+                        }
+                        
+                        // 計算底池分配
+                        if (loWinners.length === 0) {
+                            // 沒有低牌，高牌獲勝者平分整個底池
+                            hiWinners.forEach(player => {
+                                results[`player_${player}`].hi_wins++
+                                if (hiWinners.length === 1) {
+                                    results[`player_${player}`].scoops++
+                                } else {
+                                    results[`player_${player}`].splits++
+                                }
+                            })
+                        } else {
+                            // 有低牌的情況
+                            hiWinners.forEach(player => {
+                                results[`player_${player}`].hi_wins++
+                                
+                                if (loWinners.includes(player)) {
+                                    // 同一玩家贏得高牌和低牌
+                                    if (hiWinners.length === 1 && loWinners.length === 1) {
+                                        results[`player_${player}`].scoops++
+                                    } else if (hiWinners.length === 1 && loWinners.length > 1) {
+                                        results[`player_${player}`].three_quarters++
+                                    } else if (hiWinners.length > 1 && loWinners.length === 1) {
+                                        results[`player_${player}`].three_quarters++
+                                    } else {
+                                        results[`player_${player}`].splits++
+                                    }
+                                } else {
+                                    // 只贏得高牌
+                                    if (hiWinners.length === 1) {
+                                        results[`player_${player}`].splits++  // 獲得1/2底池
+                                    } else {
+                                        results[`player_${player}`].quarters++  // 平分1/2底池
+                                    }
+                                }
+                            })
+                            
+                            loWinners.forEach(player => {
+                                results[`player_${player}`].lo_wins++
+                                
+                                if (!hiWinners.includes(player)) {
+                                    // 只贏得低牌
+                                    if (loWinners.length === 1) {
+                                        results[`player_${player}`].splits++  // 獲得1/2底池
+                                    } else {
+                                        results[`player_${player}`].quarters++  // 平分1/2底池
+                                    }
+                                }
+                            })
+                        }
+                    }
+                }
+
+                async function calculateEquity() {
+                    error.value = ''
+                    results.value = null
+                    
+                    const hands = playerHands.value.slice(0, playerCount.value).map(hand => parseCards(hand))
+                    const board = parseCards(boardCards.value)
+                    
+                    isCalculating.value = true
+                    
+                    setTimeout(() => {
+                        try {
+                            const calculationResults = EquityCalculator.calculateEquity(hands, board, 10000)
+                            
+                            results.value = {
+                                simulations: 10000,
+                                players: Object.keys(calculationResults).map((playerKey, index) => ({
+                                    player: `玩家${index + 1}`,
+                                    hand: hands[index].map(c => c.toString()).join(' '),
+                                    color: playerColors[index % playerColors.length],
+                                    ...calculationResults[playerKey]
+                                }))
+                            }
+                        } catch (err) {
+                            error.value = `計算錯誤: ${err.message}`
+                        } finally {
+                            isCalculating.value = false
+                        }
+                    }, 100)
+                }
+
+                return {
+                    playerCount,
+                    playerHands,
+                    boardCards,
+                    isCalculating,
+                    results,
+                    error,
+                    selectedPlayer,
+                    selectedCards,
+                    currentPlayers,
+                    canCalculate,
+                    suits,
+                    ranks,
+                    selectPlayer,
+                    selectCard,
+                    isCardUsed,
+                    getCardColor,
+                    clearPlayerCards,
+                    clearBoardCards,
+                    clearAll,
+                    calculateEquity
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
